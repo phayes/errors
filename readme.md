@@ -6,6 +6,16 @@ phayes/errors: Better error handling for go
 
 Documentation: https://godoc.org/github.com/phayes/errors
 
+Go standard `errors` package is a great simple error package for producing errors, but has several shortcomings that `phayes/errors`
+hopes to remediate. 
+
+The most glaring anti-pattern that the standard `errors` package unintentionally encourages is 
+`return errors.New(err.Error() + ' Some more details about the error')`. This anti-pattern is corrected in `phayes/errors` by allowing
+you to cleanly wrap one error with another like so: `return errors.Wrap(err, 'More details about the error')` while preseving the
+underlying error for later inspection. 
+
+This package also provides several other useful functions for encouraging good patterns in general error handling.
+
 Examples
 --------
 

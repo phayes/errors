@@ -1,4 +1,16 @@
-At it's most basic, it is a drop in replacement for the standard error package.
+
+phayes-errors: Yet another error library for go
+-----------------------------------------------
+
+https://godoc.org/github.com/phayes/errors
+
+[![Build Status](https://travis-ci.org/phayes/errors.svg?branch=master)](https://travis-ci.org/phayes/errors)
+[![Coverage Status](https://coveralls.io/repos/phayes/errors/badge.png?branch=master)](https://coveralls.io/r/phayes/errors
+
+Examples
+--------
+
+At it's most basic, phayes-errors is a drop in replacement for the standard error package.
 
 ```go
     err := errors.New("Could not parse input")
@@ -35,7 +47,7 @@ It also plays nicely with standard library errors and predefined errors
     func ReadStream(b []byte) error {
         n, err := reader.Read(b)
         if err != nil {
-	        return errors.Wrap(err,ErrFailedStream)
+	        return errors.Wrap(err, ErrFailedStream)
         }	
     }
 

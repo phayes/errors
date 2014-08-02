@@ -6,14 +6,14 @@ phayes/errors: Better error handling for go
 
 Documentation: https://godoc.org/github.com/phayes/errors
 
-Go's standard `errors` package is a great simple error package for producing errors, but has several shortcomings that `phayes/errors`
+Go's standard `errors` package is a simple error package for handling errors, and works fine for shallow codebases, but has several shortcomings that `phayes/errors`
 hopes to remediate. 
 
-The most glaring anti-pattern that the standard errors package encourages is this one we are all familiar with:
+The biggest anti-pattern that the standard errors package encourages is one we are all familiar with:
  
 ```go
     if err != nil
-        return errors.New(err.Error() + ' Some more details about the error')
+        return errors.New(err.Error() + ". Some more details about the error")
     }
 ```
 
@@ -21,7 +21,7 @@ This anti-pattern is corrected in phayes/errors by allowing you to cleanly wrap 
 
 ```go
     if err != nil {
-        return errors.Wrap(err, 'More details about the error')
+        return errors.Wrap(err, "Some more details about the error")
     }
 ```
 

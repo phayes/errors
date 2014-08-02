@@ -1,5 +1,5 @@
 
-phayes-errors: Yet another error library for go
+phayes/errors: Better error handling for go
 -----------------------------------------------
 [![Build Status](https://travis-ci.org/phayes/errors.svg?branch=master)](https://travis-ci.org/phayes/errors)
 [![Coverage Status](https://coveralls.io/repos/phayes/errors/badge.png?branch=master)](https://coveralls.io/r/phayes/errors)
@@ -9,7 +9,7 @@ Documentation: https://godoc.org/github.com/phayes/errors
 Examples
 --------
 
-At it's most basic, phayes-errors is a drop in replacement for the standard error package.
+At it's most basic, `phayes/errors` is a drop in replacement for the standard error package.
 
 ```go
     err := errors.New("Could not parse input")

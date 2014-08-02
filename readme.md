@@ -1,11 +1,10 @@
 
 phayes-errors: Yet another error library for go
 -----------------------------------------------
-
-https://godoc.org/github.com/phayes/errors
-
 [![Build Status](https://travis-ci.org/phayes/errors.svg?branch=master)](https://travis-ci.org/phayes/errors)
-[![Coverage Status](https://coveralls.io/repos/phayes/errors/badge.png?branch=master)](https://coveralls.io/r/phayes/errors
+[![Coverage Status](https://coveralls.io/repos/phayes/errors/badge.png?branch=master)](https://coveralls.io/r/phayes/errors)
+
+Documentation: https://godoc.org/github.com/phayes/errors
 
 Examples
 --------

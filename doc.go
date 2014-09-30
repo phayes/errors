@@ -75,7 +75,7 @@ However, it also provides the ability to wrap an error to give it more context:
     }
 
 
-Inspecting errors=
+Inspecting errors
 
 Use the `IsA` function to check to if the error, or any of it's inner errors, is what you're after. This is fully compatible with errors that
 are not part of phayes/errors. For example:

@@ -18,7 +18,7 @@ This anti-pattern is corrected in phayes/errors by allowing you to cleanly wrap 
 
 This allows us to cleanly add more details to an error, while preseving the underlying error for later inspection.
 
-It also plays nicely with standard library errors and predefined errors
+It also plays nicely with standard library errors and predefined errors:
 
     import (
         "github.com/phayes/errors"
@@ -48,13 +48,12 @@ It also plays nicely with standard library errors and predefined errors
 
 
 Wrapping errors
----------------
 
 At it's most basic, `phayes/errors` is a drop in replacement for the standard error package.
 
     err := errors.New("Could not parse input")
 
-However, it also provides the ability to wrap an error to give it more context
+However, it also provides the ability to wrap an error to give it more context:
 
     import (
         "github.com/phayes/errors"
@@ -76,8 +75,7 @@ However, it also provides the ability to wrap an error to give it more context
     }
 
 
-Inspecting errors
------------------
+Inspecting errors=
 
 Use the `IsA` function to check to if the error, or any of it's inner errors, is what you're after. This is fully compatible with errors that
 are not part of phayes/errors. For example:

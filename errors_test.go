@@ -73,58 +73,16 @@ func TestFooWrappingFmt(t *testing.T) {
 	}
 }
 
-func TestReverseWraps(t *testing.T) {
-	err := errors.RWraps(ErrFoo, "inner string")
+func TestAppend(t *testing.T) {
+	err := errors.Appends(ErrFoo, "inner string")
 	if err.Error() != "Fooey. inner string" {
 		t.Error("String error for ReverseWraps")
 		return
 	}
-	err = errors.RWrapf(ErrFoo, "%s", Strger)
+	err = errors.Appendf(ErrFoo, "%s", Strger)
 	if err.Error() != "Fooey. stringer out" {
 		t.Error("String error for ReverseWrapf")
 		return
-	}
-}
-
-func TestStdErrorWrappingFooPanic(t *testing.T) {
-	defer func() {
-		if r := recover(); r != nil {
-			return
-		} else {
-			t.Error("Failed to panic for StdErrorWrappingFooPanic")
-		}
-	}()
-	err := StdErrorWrappingFoo() // should panic
-	if err != nil {
-		t.Error("Invalid error is not nil")
-	}
-}
-
-func TestReverseWrapsPanic(t *testing.T) {
-	defer func() {
-		if r := recover(); r != nil {
-			return
-		} else {
-			t.Error("Failed to panic for ReverseWrapsPanic")
-		}
-	}()
-	err := errors.RWraps(ErrStd, "inner string")
-	if err != nil {
-		t.Error("Invalid error is not nil")
-	}
-}
-
-func TestReverseWrapfPanic(t *testing.T) {
-	defer func() {
-		if r := recover(); r != nil {
-			return
-		} else {
-			t.Error("Failed to panic for ReverseWrapfPanic")
-		}
-	}()
-	err := errors.RWrapf(ErrStd, "%s", "stringy")
-	if err != nil {
-		t.Error("Invalid error is not nil")
 	}
 }
 

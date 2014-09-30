@@ -1,6 +1,7 @@
 package errors
 
 import (
+	"errors"
 	"fmt"
 )
 
@@ -24,13 +25,13 @@ type Error interface {
 
 // Default implementation of Error interface
 type DefaultError struct {
-	msg   string
+	err   error
 	inner error
 }
 
 // This returns a string with error information, excluding inner errors
 func (e DefaultError) Message() string {
-	return e.msg
+	return e.err.Error()
 }
 
 // This returns a string with all available error information, including inner
@@ -50,8 +51,7 @@ func (e DefaultError) Inner() error {
 
 // Get the base error that forms the basis of the DefaultError - returns a copy of itself without inners
 func (e DefaultError) Base() error {
-	e.inner = nil
-	return e
+	return e.err
 }
 
 // Wrap the passed error in this error and return a copy
@@ -64,7 +64,7 @@ func (e DefaultError) Wrap(err error) Error {
 // It intentionally mirrors the standard "errors" module so as to be a drop-in replacement
 func New(s string) error {
 	return DefaultError{
-		msg: s,
+		err: errors.New(s),
 	}
 }
 
@@ -72,53 +72,71 @@ func New(s string) error {
 // This is a replacement for fmt.Errorf.
 func Newf(format string, args ...interface{}) error {
 	return DefaultError{
-		msg: fmt.Sprintf(format, args...),
+		err: errors.New(fmt.Sprintf(format, args...)),
 	}
 }
 
-// Wrap the first error in the second error.
-// The second error must be an instance of phayes/errors.Error
+// Append more information to the error. The reverse of Wrap.
+func Append(outerErr error, innerErr error) error {
+	if outerError, ok := outerErr.(Error); ok {
+		return outerError.Wrap(innerErr)
+	} else {
+		return DefaultError{
+			err:   outerErr,
+			inner: innerErr,
+		}
+	}
+}
+
+// Append more information to the error using a string. The reverse of Wraps.
+func Appends(outerErr error, inner string) error {
+	if outerError, ok := outerErr.(Error); ok {
+		return outerError.Wrap(New(inner))
+	} else {
+		return DefaultError{
+			err:   outerErr,
+			inner: errors.New(inner),
+		}
+	}
+}
+
+// Append more information to the error using formatting. The reverse of Wrapf.
+func Appendf(outerErr error, format string, args ...interface{}) error {
+	if outerError, ok := outerErr.(Error); ok {
+		return outerError.Wrap(Newf(format, args...))
+	} else {
+		return DefaultError{
+			err:   outerErr,
+			inner: Newf(format, args...),
+		}
+	}
+}
+
+// Wrap the first error in the second error. Reverse of Append
 func Wrap(innerErr error, outerErr error) error {
 	if outerError, ok := outerErr.(Error); ok {
 		return outerError.Wrap(innerErr)
 	} else {
-		panic("outerErr must be an instance of phayes/errors.Error")
+		return DefaultError{
+			err:   outerErr,
+			inner: innerErr,
+		}
 	}
 }
 
-// Wrap an error in a new error using the provided string
+// Wrap an error in a new error using the provided string. Reverse of Appends
 func Wraps(err error, outer string) error {
 	return DefaultError{
-		msg:   outer,
+		err:   errors.New(outer),
 		inner: err,
 	}
 }
 
-// Same as Wraps, but with fmt.Printf-style parameters.
+// Same as Wraps, but with fmt.Printf-style parameters. Reverse of Appendf
 func Wrapf(err error, format string, args ...interface{}) error {
 	return DefaultError{
-		msg:   fmt.Sprintf(format, args...),
+		err:   errors.New(fmt.Sprintf(format, args...)),
 		inner: err,
-	}
-}
-
-// Reverse Wraps
-// Wrap the given string with the error. error must be an instance of phayes/errors.Error
-func RWraps(outerErr error, inner string) error {
-	if outerError, ok := outerErr.(Error); ok {
-		return outerError.Wrap(New(inner))
-	} else {
-		panic("outerErr must be an instance of phayes/errors.Error")
-	}
-}
-
-// Reverse Wrapf
-// Wrap the given formatted string with the error. error must be an instance of phayes/errors.Error
-func RWrapf(outerErr error, format string, args ...interface{}) error {
-	if outerError, ok := outerErr.(Error); ok {
-		return outerError.Wrap(Newf(format, args...))
-	} else {
-		panic("outerErr must be an instance of phayes/errors.Error")
 	}
 }
 
@@ -132,17 +150,18 @@ func Equal(e1 error, e2 error) bool {
 	e1Error, e1ok := e1.(Error)
 	e2Error, e2ok := e2.(Error)
 
-	// If neither of them are Errors we can stop now
-	if !e1ok && !e2ok {
+	switch {
+	case e1ok && e2ok:
+		return e2Error.Base() == e1Error.Base()
+	case e1ok && !e2ok:
+		return e1Error.Base() == e2
+	case !e1ok && e2ok:
+		return e2Error.Base() == e1
+	case !e1ok && !e2ok:
+		return e1 == e2
+	default:
 		return false
-	} else if e1ok && e2ok {
-		if e2Error.Base() == e1Error.Base() {
-			return true
-		}
 	}
-
-	// No match
-	return false
 }
 
 // Check if two errors are the same or if the first contains the second
@@ -152,7 +171,7 @@ func IsA(outerErr error, innerErr error) bool {
 		return true
 	}
 
-	// Recursively check to see if the inner is somehow contained in the outer
+	// Recursively check to see if the inner is contained in the outer
 	if outerError, ok := outerErr.(Error); ok {
 		if outerInner := outerError.Inner(); outerInner != nil {
 			return IsA(outerInner, innerErr)

@@ -181,3 +181,17 @@ func IsA(outerErr error, innerErr error) bool {
 	// No match
 	return false
 }
+
+// Cause returns the root cause of the given error. If err does not implement phayes.Error, it returns err itself.
+func Cause(err error) error {
+	outerError, ok := err.(Error)
+	if !ok {
+		return err
+	}
+
+	if outerError.Inner() == nil {
+		return outerError.Base()
+	} else {
+		return Cause(outerError.Inner())
+	}
+}

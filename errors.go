@@ -5,138 +5,157 @@ import (
 	"fmt"
 )
 
-type Error interface {
-	// This returns the error message without inner errors
-	Message() string
-
-	// Get the inner error. Will return nil if there is no inner error
-	Inner() error
-
-	// Wrap the given error. Calling Inner() should retreive it. Return a copy of the outer error as an Error.
-	Wrap(error) Error
-
-	// Base() should return a copy of the Error without any inners
-	// This method is called to check two errors for equality
-	Base() error
-
-	// Implements the built-in error interface.
-	Error() string
-}
-
 // Default implementation of Error interface
-type DefaultError struct {
+type Error struct {
 	err   error
 	inner error
+	anno  map[string]interface{}
 }
 
 // This returns a string with error information, excluding inner errors
-func (e DefaultError) Message() string {
+func (e *Error) Message() string {
 	return e.err.Error()
 }
 
-// This returns a string with all available error information, including inner
-// errors that are wrapped by this errors.
-func (e DefaultError) Error() string {
-	if e.inner != nil {
-		return e.Message() + ". " + e.inner.Error()
+// Get the inner error that is wrapped by this error
+func (e *Error) Inner() *Error {
+	if e.inner == nil {
+		return nil
+	} else if innerError, ok := e.inner.(*Error); ok {
+		return innerError
 	} else {
-		return e.Message()
+		return &Error{
+			err: e.inner,
+		}
 	}
 }
 
-// Get the inner error that is wrapped by this error
-func (e DefaultError) Inner() error {
-	return e.inner
+// Get the base error that forms the basis of the Error - returns a copy of itself without inners
+func (e *Error) Base() *Error {
+	if e.inner == nil {
+		return e
+	} else {
+		return &Error{
+			err:  e.err,
+			anno: e.anno,
+		}
+	}
 }
 
-// Get the base error that forms the basis of the DefaultError - returns a copy of itself without inners
-func (e DefaultError) Base() error {
-	return e.err
+// This returns a string with all available error information, including inner
+// errors that are wrapped by this errors and annotations.
+func (e *Error) Error() string {
+	var msg string
+	if e.inner != nil {
+		msg = e.Message() + ". " + e.inner.Error()
+	} else {
+		msg = e.Message()
+	}
+	anno := e.GetAnnotations()
+	if len(anno) != 0 {
+		msg += ". "
+		for key, value := range anno {
+			msg += key + ": " + fmt.Sprintf("%s", value) + ". "
+		}
+	}
+	return msg
 }
 
-// Wrap the passed error in this error and return a copy
-func (e DefaultError) Wrap(err error) Error {
+// Annotate additional information about the error
+func (e *Error) Annotate(key string, value interface{}) {
+	if e.anno == nil {
+		e.anno = make(map[string]interface{})
+	}
+	e.anno[key] = value
+}
+
+// Get all annotations about the error. This includes annotations from inner errors.
+// If inner errors and outer errors share the same key, the outer error's information takes precedence.
+func (e *Error) GetAnnotations() map[string]interface{} {
+	var anno map[string]interface{}
+	if e.anno == nil {
+		anno = make(map[string]interface{})
+	} else {
+		anno = e.anno
+	}
+
+	if innerError := e.Inner(); innerError != nil {
+		innerAnno := innerError.GetAnnotations()
+		for key, value := range innerAnno {
+			if _, ok := anno[key]; !ok {
+				anno[key] = value
+			}
+		}
+	}
+	return anno
+}
+
+// Get the innermost error that is wrapped by this error
+func (e *Error) Cause() error {
+	if e.Inner() == nil {
+		return e
+	} else {
+		return e.Inner().Cause()
+	}
+}
+
+// Wrap the passed error in this error and return the new error
+func (e *Error) Wrap(err error) *Error {
 	e.inner = err
 	return e
 }
 
+// Wrap the passed error in this error
+func (e *Error) Wraps(str string) *Error {
+	return e.Wrap(errors.New(str))
+}
+
+// Wrap the passed error in this error
+func (e *Error) Wrapf(format string, args ...interface{}) *Error {
+	return e.Wrap(fmt.Errorf(format, args...))
+}
+
+// Append the passed error in this error
+func (e *Error) Append(err error) *Error {
+	if outerError, ok := err.(*Error); ok {
+		return outerError.Wrap(e)
+	} else {
+		return &Error{
+			err:   err,
+			inner: e,
+		}
+	}
+}
+
+// Wrap the passed error in this error and return a copy
+func (e *Error) Appends(str string) *Error {
+	return &Error{
+		err:   New(str),
+		inner: e,
+	}
+}
+
+// Wrap the passed error in this error and return a copy
+func (e *Error) Appendf(format string, args ...interface{}) *Error {
+	return &Error{
+		err:   Newf(format, args...),
+		inner: e,
+	}
+}
+
 // Create new error from string.
 // It intentionally mirrors the standard "errors" module so as to be a drop-in replacement
-func New(s string) error {
-	return DefaultError{
+func New(s string) *Error {
+	return &Error{
 		err: errors.New(s),
 	}
 }
 
 // Same as New, but with fmt.Printf-style parameters.
 // This is a replacement for fmt.Errorf.
-func Newf(format string, args ...interface{}) error {
-	return DefaultError{
+func Newf(format string, args ...interface{}) *Error {
+	return &Error{
 		err: errors.New(fmt.Sprintf(format, args...)),
-	}
-}
-
-// Append more information to the error. The reverse of Wrap.
-func Append(outerErr error, innerErr error) error {
-	if outerError, ok := outerErr.(Error); ok {
-		return outerError.Wrap(innerErr)
-	} else {
-		return DefaultError{
-			err:   outerErr,
-			inner: innerErr,
-		}
-	}
-}
-
-// Append more information to the error using a string. The reverse of Wraps.
-func Appends(outerErr error, inner string) error {
-	if outerError, ok := outerErr.(Error); ok {
-		return outerError.Wrap(New(inner))
-	} else {
-		return DefaultError{
-			err:   outerErr,
-			inner: errors.New(inner),
-		}
-	}
-}
-
-// Append more information to the error using formatting. The reverse of Wrapf.
-func Appendf(outerErr error, format string, args ...interface{}) error {
-	if outerError, ok := outerErr.(Error); ok {
-		return outerError.Wrap(Newf(format, args...))
-	} else {
-		return DefaultError{
-			err:   outerErr,
-			inner: Newf(format, args...),
-		}
-	}
-}
-
-// Wrap the first error in the second error. Reverse of Append
-func Wrap(innerErr error, outerErr error) error {
-	if outerError, ok := outerErr.(Error); ok {
-		return outerError.Wrap(innerErr)
-	} else {
-		return DefaultError{
-			err:   outerErr,
-			inner: innerErr,
-		}
-	}
-}
-
-// Wrap an error in a new error using the provided string. Reverse of Appends
-func Wraps(err error, outer string) error {
-	return DefaultError{
-		err:   errors.New(outer),
-		inner: err,
-	}
-}
-
-// Same as Wraps, but with fmt.Printf-style parameters. Reverse of Appendf
-func Wrapf(err error, format string, args ...interface{}) error {
-	return DefaultError{
-		err:   errors.New(fmt.Sprintf(format, args...)),
-		inner: err,
 	}
 }
 
@@ -147,8 +166,8 @@ func Equal(e1 error, e2 error) bool {
 	}
 
 	// Try to convert them into errors.Error and see if they are the same or if one is based on another
-	e1Error, e1ok := e1.(Error)
-	e2Error, e2ok := e2.(Error)
+	e1Error, e1ok := e1.(*Error)
+	e2Error, e2ok := e2.(*Error)
 
 	switch {
 	case e1ok && e2ok:
@@ -172,7 +191,7 @@ func IsA(outerErr error, innerErr error) bool {
 	}
 
 	// Recursively check to see if the inner is contained in the outer
-	if outerError, ok := outerErr.(Error); ok {
+	if outerError, ok := outerErr.(*Error); ok {
 		if outerInner := outerError.Inner(); outerInner != nil {
 			return IsA(outerInner, innerErr)
 		}
@@ -180,18 +199,4 @@ func IsA(outerErr error, innerErr error) bool {
 
 	// No match
 	return false
-}
-
-// Cause returns the root cause of the given error. If err does not implement phayes.Error, it returns err itself.
-func Cause(err error) error {
-	outerError, ok := err.(Error)
-	if !ok {
-		return err
-	}
-
-	if outerError.Inner() == nil {
-		return outerError.Base()
-	} else {
-		return Cause(outerError.Inner())
-	}
 }

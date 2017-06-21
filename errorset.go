@@ -25,7 +25,7 @@ func (e *ErrorSet) Error() string {
 	}
 	output := ""
 	for str, err := range e.set {
-		output += str + ": " + err.Error() + "\n"
+		output += str + ": " + err.Error() + ". "
 	}
 	return output
 }
@@ -69,4 +69,16 @@ func (e *ErrorSet) GetAll() map[string]error {
 	}
 
 	return set
+}
+
+// HasErrors returns true if the ErrorSet contains an error
+func (e *ErrorSet) HasErrors() bool {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	if e.set == nil || len(e.set) == 0 {
+		return false
+	}
+
+	return true
 }

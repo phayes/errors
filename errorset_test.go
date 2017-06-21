@@ -14,8 +14,18 @@ var (
 func TestErrorSet(t *testing.T) {
 	errset := errors.NewErrorSet()
 
+	if errset.HasErrors() {
+		t.Error("Empty set has errors")
+		return
+	}
+
 	errset.Add("foo", ErrFoo2)
 	errset.Add("bar", ErrBar2)
+
+	if !errset.HasErrors() {
+		t.Error("Non-empty set does not have errors")
+		return
+	}
 
 	foo := errset.Get("foo")
 	if foo != ErrFoo2 {

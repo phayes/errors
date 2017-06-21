@@ -2,8 +2,9 @@ package errors_test
 
 import (
 	stderrors "errors"
-	"github.com/phayes/errors"
 	"testing"
+
+	"github.com/phayes/errors"
 )
 
 var (

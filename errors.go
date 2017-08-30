@@ -5,6 +5,7 @@ import (
 	"fmt"
 )
 
+// Error interface may be implemented by other packages
 type Error interface {
 	// This returns the error message without inner errors
 	Message() string
@@ -23,18 +24,18 @@ type Error interface {
 	Error() string
 }
 
-// Default implementation of Error interface
+// DefaultError is the default implementation of Error interface
 type DefaultError struct {
 	err   error
 	inner error
 }
 
-// This returns a string with error information, excluding inner errors
+// Message returns a string with error information, excluding inner errors
 func (e DefaultError) Message() string {
 	return e.err.Error()
 }
 
-// This returns a string with all available error information, including inner
+// Error returns a string with all available error information, including inner
 // errors that are wrapped by this errors.
 func (e DefaultError) Error() string {
 	if e.inner != nil {
@@ -44,12 +45,12 @@ func (e DefaultError) Error() string {
 	}
 }
 
-// Get the inner error that is wrapped by this error
+// Inner gets the inner error that is wrapped by this error
 func (e DefaultError) Inner() error {
 	return e.inner
 }
 
-// Get the base error that forms the basis of the DefaultError - returns a copy of itself without inners
+// Base gets the base error that forms the basis of the DefaultError - returns a copy of itself without inners
 func (e DefaultError) Base() error {
 	return e.err
 }
@@ -60,7 +61,7 @@ func (e DefaultError) Wrap(err error) Error {
 	return e
 }
 
-// Create new error from string.
+// New create new error from string.
 // It intentionally mirrors the standard "errors" module so as to be a drop-in replacement
 func New(s string) error {
 	return DefaultError{
@@ -68,7 +69,7 @@ func New(s string) error {
 	}
 }
 
-// Same as New, but with fmt.Printf-style parameters.
+// Newf is the same as New, but with fmt.Printf-style parameters.
 // This is a replacement for fmt.Errorf.
 func Newf(format string, args ...interface{}) error {
 	return DefaultError{
@@ -80,35 +81,32 @@ func Newf(format string, args ...interface{}) error {
 func Append(outerErr error, innerErr error) error {
 	if outerError, ok := outerErr.(Error); ok {
 		return outerError.Wrap(innerErr)
-	} else {
-		return DefaultError{
-			err:   outerErr,
-			inner: innerErr,
-		}
+	}
+	return DefaultError{
+		err:   outerErr,
+		inner: innerErr,
 	}
 }
 
-// Append more information to the error using a string. The reverse of Wraps.
+// Appends more information to the error using a string. The reverse of Wraps.
 func Appends(outerErr error, inner string) error {
 	if outerError, ok := outerErr.(Error); ok {
 		return outerError.Wrap(New(inner))
-	} else {
-		return DefaultError{
-			err:   outerErr,
-			inner: errors.New(inner),
-		}
+	}
+	return DefaultError{
+		err:   outerErr,
+		inner: errors.New(inner),
 	}
 }
 
-// Append more information to the error using formatting. The reverse of Wrapf.
+// Appendf appends more information to the error using formatting. The reverse of Wrapf.
 func Appendf(outerErr error, format string, args ...interface{}) error {
 	if outerError, ok := outerErr.(Error); ok {
 		return outerError.Wrap(Newf(format, args...))
-	} else {
-		return DefaultError{
-			err:   outerErr,
-			inner: Newf(format, args...),
-		}
+	}
+	return DefaultError{
+		err:   outerErr,
+		inner: Newf(format, args...),
 	}
 }
 
@@ -116,15 +114,14 @@ func Appendf(outerErr error, format string, args ...interface{}) error {
 func Wrap(innerErr error, outerErr error) error {
 	if outerError, ok := outerErr.(Error); ok {
 		return outerError.Wrap(innerErr)
-	} else {
-		return DefaultError{
-			err:   outerErr,
-			inner: innerErr,
-		}
+	}
+	return DefaultError{
+		err:   outerErr,
+		inner: innerErr,
 	}
 }
 
-// Wrap an error in a new error using the provided string. Reverse of Appends
+// Wraps wraps an error in a new error using the provided string. Reverse of Appends
 func Wraps(err error, outer string) error {
 	return DefaultError{
 		err:   errors.New(outer),
@@ -132,7 +129,7 @@ func Wraps(err error, outer string) error {
 	}
 }
 
-// Same as Wraps, but with fmt.Printf-style parameters. Reverse of Appendf
+// Wrapf is the same as Wraps, but with fmt.Printf-style parameters. Reverse of Appendf
 func Wrapf(err error, format string, args ...interface{}) error {
 	return DefaultError{
 		err:   errors.New(fmt.Sprintf(format, args...)),
@@ -140,7 +137,7 @@ func Wrapf(err error, format string, args ...interface{}) error {
 	}
 }
 
-// Check to see if two errors are the same
+// Equal checks to see if two errors are the same
 func Equal(e1 error, e2 error) bool {
 	if e1 == e2 {
 		return true
@@ -164,7 +161,7 @@ func Equal(e1 error, e2 error) bool {
 	}
 }
 
-// Check if two errors are the same or if the first contains the second
+// IsA checks if two errors are the same or if the first contains the second
 // This will recursively check their inner components to see if one is an instance of the other
 func IsA(outerErr error, innerErr error) bool {
 	if Equal(outerErr, innerErr) {
@@ -191,7 +188,6 @@ func Cause(err error) error {
 
 	if outerError.Inner() == nil {
 		return outerError.Base()
-	} else {
-		return Cause(outerError.Inner())
 	}
+	return Cause(outerError.Inner())
 }

@@ -11,8 +11,8 @@ var (
 	Strger  = stringer{}
 	ErrFoo  = errors.New("Fooey")
 	ErrBar  = errors.New("Barf")
-	ErrStd  = stderrors.New("This is a stanard error from the standard library.")
-	ErrStd2 = stderrors.New("Another standard error from the standard library.")
+	ErrStd  = stderrors.New("This is a stanard error from the standard library")
+	ErrStd2 = stderrors.New("Another standard error from the standard library")
 	ErrFmt  = errors.Newf("%s", Strger)
 )
 
@@ -32,7 +32,7 @@ func TestFooWrappingStdError(t *testing.T) {
 		t.Error("Error that wraps standard library not determined to contain the standard")
 		return
 	}
-	if err.Error() != "Fooey. This is a stanard error from the standard library." {
+	if err.Error() != "Fooey. This is a stanard error from the standard library" {
 		t.Error("String genertation not correct for FooWrappingStdError")
 		return
 	}
@@ -75,16 +75,44 @@ func TestFooWrappingFmt(t *testing.T) {
 }
 
 func TestAppend(t *testing.T) {
-	err := errors.Appends(ErrFoo, "inner string")
+	err := errors.Append(ErrFoo, errors.New("inner string"))
 	if err.Error() != "Fooey. inner string" {
-		t.Error("String error for ReverseWraps")
+		t.Error("String error for Appends")
+		return
+	}
+	err = errors.Appends(ErrFoo, "inner string")
+	if err.Error() != "Fooey. inner string" {
+		t.Error("String error for Appends")
 		return
 	}
 	err = errors.Appendf(ErrFoo, "%s", Strger)
 	if err.Error() != "Fooey. stringer out" {
-		t.Error("String error for ReverseWrapf")
+		t.Error("String error for Appendf")
 		return
 	}
+
+	// Test appending to a stderr
+	err = errors.Append(ErrStd, errors.New("inner string"))
+	if err.Error() != "This is a stanard error from the standard library. inner string" {
+		t.Error("String error for Appends")
+		return
+	}
+	err = errors.Append(ErrStd, ErrStd2)
+	if err.Error() != "This is a stanard error from the standard library. Another standard error from the standard library" {
+		t.Error("String error for Appends")
+		return
+	}
+	err = errors.Appends(ErrStd, "inner string")
+	if err.Error() != "This is a stanard error from the standard library. inner string" {
+		t.Error("String error for Appends")
+		return
+	}
+	err = errors.Appendf(ErrStd, "%s", Strger)
+	if err.Error() != "This is a stanard error from the standard library. stringer out" {
+		t.Error("String error for Appendf")
+		return
+	}
+
 }
 
 func TestEquality(t *testing.T) {
@@ -113,9 +141,21 @@ func TestEquality(t *testing.T) {
 		return
 	}
 }
+func TestCause(t *testing.T) {
+	if errors.Cause(ErrStd) != ErrStd {
+		t.Error("Cause of standard error should be itself")
+	}
+	if errors.Cause(FooWrappingStdError()) != ErrStd {
+		t.Error("Cause of FooWrappingStdError should be ErrStd")
+	}
+	if !errors.Equal(errors.Cause(StdErrorWrappingFoo()), ErrFoo) {
+		t.Error("Cause of StdErrorWrappingFoo should be Foo")
+	}
+
+}
 
 func StdErrorWrappingFoo() error {
-	return errors.Wrap(ErrFoo, ErrStd) // should panic
+	return errors.Wrap(ErrFoo, ErrStd)
 }
 
 func FooWrappingStdError() error {

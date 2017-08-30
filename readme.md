@@ -2,6 +2,7 @@ phayes/errors: Better error handling for go
 -----------------------------------------------
 [![GoDoc](https://godoc.org/github.com/phayes/errors?status.svg)](https://godoc.org/github.com/phayes/errors)
 [![Build Status](https://travis-ci.org/phayes/errors.svg?branch=master)](https://travis-ci.org/phayes/errors)
+[![Go Report Card](https://goreportcard.com/badge/github.com/phayes/errors)](https://goreportcard.com/report/github.com/phayes/errors)
 [![Coverage Status](https://coveralls.io/repos/phayes/errors/badge.png?branch=master)](https://coveralls.io/r/phayes/errors)
 
 Go's standard `errors` package is a simple error package for handling errors, and works fine for shallow codebases, but has several shortcomings that `phayes/errors`

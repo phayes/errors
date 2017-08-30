@@ -55,4 +55,8 @@ func TestErrorSet(t *testing.T) {
 		return
 	}
 
+	if errset.Error() != "foo: Foo. bar: Bar" && errset.Error() != "bar: Bar. foo: Foo" {
+		t.Error("Wrong errset.Error() output")
+		return
+	}
 }

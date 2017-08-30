@@ -1,6 +1,7 @@
 package errors
 
 import (
+	"strings"
 	"sync"
 )
 
@@ -27,6 +28,7 @@ func (e *ErrorSet) Error() string {
 	for str, err := range e.set {
 		output += str + ": " + err.Error() + ". "
 	}
+	output = strings.TrimRight(output, ". ")
 	return output
 }
 

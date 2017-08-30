@@ -18,6 +18,10 @@ func TestErrorSet(t *testing.T) {
 		t.Error("Empty set has errors")
 		return
 	}
+	if errset.Error() != "" {
+		t.Error("Wrong errset.Error() output for empty errset")
+		return
+	}
 
 	errset.Add("foo", ErrFoo2)
 	errset.Add("bar", ErrBar2)
@@ -36,6 +40,12 @@ func TestErrorSet(t *testing.T) {
 	bar := errset.Get("bar")
 	if bar != ErrBar2 {
 		t.Error("Unable to set and get bar")
+		return
+	}
+
+	baz := errset.Get("baz")
+	if baz != nil {
+		t.Error("Unset key should return nil")
 		return
 	}
 

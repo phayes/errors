@@ -40,9 +40,8 @@ func (e DefaultError) Message() string {
 func (e DefaultError) Error() string {
 	if e.inner != nil {
 		return e.Message() + ". " + e.inner.Error()
-	} else {
-		return e.Message()
 	}
+	return e.Message()
 }
 
 // Inner gets the inner error that is wrapped by this error

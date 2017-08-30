@@ -1,4 +1,6 @@
 /*
+Package errors provides better error handling.
+
 Go's standard `errors` package is a simple error package for handling errors, and works fine for shallow codebases, but has several shortcomings that `phayes/errors`
 hopes to remediate.
 
